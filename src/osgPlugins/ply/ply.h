@@ -60,7 +60,8 @@ WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 #define PLY_FLOAT32    9
 #define PLY_UINT8      10
 #define PLY_INT32      11
-#define PLY_END_TYPE   12
+#define PLY_UINT32     12
+#define PLY_END_TYPE   13
 
 #define  PLY_SCALAR  0
 #define  PLY_LIST    1

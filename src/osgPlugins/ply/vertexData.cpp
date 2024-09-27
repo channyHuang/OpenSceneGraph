@@ -172,6 +172,9 @@ void VertexData::readVertices( PlyFile* file, const int nVertices,
     {
         if (!_texcoord.valid())
             _texcoord = new osg::Vec2Array;
+    } else {
+        if (!_texcoord.valid())
+            _texcoord = new osg::Vec2Array;
     }
 
     // read in the vertices
@@ -207,6 +210,8 @@ void VertexData::readVertices( PlyFile* file, const int nVertices,
                                              (unsigned int) vertex.specular_blue / 255.0, 1.0 ) );
         if (fields & TEXCOORD)
             _texcoord->push_back(osg::Vec2(vertex.texture_u,vertex.texture_v));
+        else 
+            _texcoord->push_back(osg::Vec2(0.f, 0.f));
     }
 }
 
@@ -219,15 +224,20 @@ void VertexData::readTriangles( PlyFile* file, const int nFaces )
     {
         unsigned char   nVertices;
         int*            vertices;
+        unsigned char   nTexcoords;
+        float*          texcoords;
     } face;
 
     PlyProperty faceProps[] =
     {
         { "vertex_indices|vertex_index", PLY_INT, PLY_INT, offsetof( _Face, vertices ),
-          1, PLY_UCHAR, PLY_UCHAR, offsetof( _Face, nVertices ) }
+          1, PLY_UCHAR, PLY_UCHAR, offsetof( _Face, nVertices ) }, 
+          { "texcoord", PLY_FLOAT32, PLY_FLOAT32, offsetof( _Face, texcoords ),
+          1, PLY_UCHAR, PLY_UCHAR, offsetof( _Face, nTexcoords ) }
     };
 
     ply_get_property( file, "face", &faceProps[0] );
+    ply_get_property( file, "face", &faceProps[1] );
 
     if(!_triangles.valid())
         _triangles = new osg::DrawElementsUInt(osg::PrimitiveSet::TRIANGLES);
@@ -245,6 +255,8 @@ void VertexData::readTriangles( PlyFile* file, const int nFaces )
         // initialize face values
         face.nVertices = 0;
         face.vertices = 0;
+        face.nTexcoords = 0;
+        face.texcoords = 0;
 
         ply_get_element( file, static_cast< void* >( &face ) );
         if (face.vertices)
@@ -261,6 +273,15 @@ void VertexData::readTriangles( PlyFile* file, const int nFaces )
                         _triangles->push_back(face.vertices[index]);
                 }
             }
+
+            if (face.texcoords) {
+                for(int j = 0 ; j < face.nVertices ; j++)
+                {
+                    unsigned int vindex = face.vertices[j];
+                    _texcoord->at(vindex) = osg::Vec2(face.texcoords[j << 1], face.texcoords[(j << 1) + 1]);
+                }
+            }
+
             // free the memory that was allocated by ply_get_element
             free( face.vertices );
         }
@@ -381,6 +402,8 @@ osg::Node* VertexData::readPlyFile( const char* filename, const bool ignoreColor
                 if (equal_strings(props[j]->name, "texture_u"))
                     fields |= TEXCOORD;
                 if (equal_strings(props[j]->name, "texture_v"))
+                    fields |= TEXCOORD;
+                else 
                     fields |= TEXCOORD;
             }
 

@@ -65,11 +65,11 @@ const char *type_names[] = {
     "invalid",
     "char", "short", "int",
     "uchar", "ushort", "uint",
-    "float", "double", "float32", "uint8", "int32"
+    "float", "double", "float32", "uint8", "int32", "uint32"
 };
 
 int ply_type_size[] = {
-    0, 1, 2, 4, 1, 2, 4, 4, 8, 4, 1, 4
+    0, 1, 2, 4, 1, 2, 4, 4, 8, 4, 1, 4, 4
 };
 
 #define NO_OTHER_PROPS  -1
@@ -2053,6 +2053,7 @@ double get_item_value(char *item, int type)
       int_value = *pint;
       return ((double) int_value);
     case PLY_UINT:
+    case PLY_UINT32:
       puint = (unsigned int *) item;
       uint_value = *puint;
       return ((double) uint_value);
@@ -2139,6 +2140,7 @@ void write_binary_item(PlyFile *plyfile,
           fwrite (&ushort_val, 2, 1, fp);
           break;
       case PLY_UINT:
+      case PLY_UINT32:
           if( plyfile->file_type == PLY_BINARY_BE )
           {
               swap4BE(&uint_val);
@@ -2211,6 +2213,7 @@ void write_ascii_item(
     case PLY_UINT8:
     case PLY_USHORT:
     case PLY_UINT:
+    case PLY_UINT32:
       fprintf (fp, "%u ", uint_val);
       break;
     case PLY_FLOAT:
@@ -2276,6 +2279,7 @@ void get_stored_item(
       *double_val = *int_val;
       break;
     case PLY_UINT:
+    case PLY_UINT32:
       *uint_val = *((unsigned int *) ptr);
       *int_val = *uint_val;
       *double_val = *uint_val;
@@ -2410,6 +2414,7 @@ void get_binary_item(
           *double_val = *int_val;
           break;
       case PLY_UINT:
+      case PLY_UINT32:
           result = fread (ptr, 4, 1, plyfile->fp);
           if(result < 1)
           {
@@ -2511,6 +2516,7 @@ void get_ascii_item(
       break;
 
     case PLY_UINT:
+    case PLY_UINT32:
       *uint_val = strtoul (word, (char **) NULL, 10);
       *int_val = *uint_val;
       *double_val = *uint_val;
@@ -2585,6 +2591,7 @@ void store_item (
       *pint = int_val;
       break;
     case PLY_UINT:
+    case PLY_UINT32:
       puint = (unsigned int *) item;
       *puint = uint_val;
       break;
