@@ -211,7 +211,7 @@ void VertexData::readVertices( PlyFile* file, const int nVertices,
         if (fields & TEXCOORD)
             _texcoord->push_back(osg::Vec2(vertex.texture_u,vertex.texture_v));
         else 
-            _texcoord->push_back(osg::Vec2(0.f, 0.f));
+            _texcoord->push_back(osg::Vec2(-1.f, -1.f));
     }
 }
 
@@ -261,6 +261,38 @@ void VertexData::readTriangles( PlyFile* file, const int nFaces )
         ply_get_element( file, static_cast< void* >( &face ) );
         if (face.vertices)
         {
+            if (face.texcoords) {
+                for(int j = 0 ; j < face.nVertices ; j++)
+                {
+                    unsigned int vindex = face.vertices[j];
+                    if (fabs(_texcoord->at(vindex).x() + 1) <= 1e-4) {
+                        _texcoord->at(vindex) = osg::Vec2(face.texcoords[j << 1], face.texcoords[(j << 1) + 1]);
+                    }
+                    else {
+                        face.vertices[j] = _vertices->size();
+
+                        _vertices->push_back(osg::Vec3(_vertices->at(vindex).x(), _vertices->at(vindex).y(), _vertices->at(vindex).z()));
+
+                        if (_normals && _normals->size() > vindex) {
+                            _normals->push_back( osg::Vec3( _normals->at(vindex).x(), _normals->at(vindex).y(), _normals->at(vindex).z()));
+                        }
+                        if (_colors && _colors->size() > vindex) {
+                            _colors->push_back( osg::Vec4( _colors->at(vindex).r(), _colors->at(vindex).g(), _colors->at(vindex).b(), 1.f));
+                        }
+                        if (_ambient && _ambient->size() > vindex) {
+                            _ambient->push_back( osg::Vec4( _ambient->at(vindex).r(), _ambient->at(vindex).g(), _ambient->at(vindex).b(), 1.f));
+                        }
+                        if (_diffuse && _diffuse->size() > vindex) {
+                            _diffuse->push_back( osg::Vec4( _diffuse->at(vindex).r(), _diffuse->at(vindex).g(), _diffuse->at(vindex).b(), 1.f));
+                        }
+                        if (_specular && _specular->size() > vindex) {
+                            _specular->push_back( osg::Vec4( _specular->at(vindex).r(), _specular->at(vindex).g(), _specular->at(vindex).b(), 1.f));
+                        }
+                        _texcoord->push_back(osg::Vec2(face.texcoords[j << 1], face.texcoords[(j << 1) + 1]));
+                    }
+                }
+            }
+
             if (face.nVertices == NUM_VERTICES_TRIANGLE ||  face.nVertices == NUM_VERTICES_QUAD)
             {
                 unsigned short index;
@@ -271,14 +303,6 @@ void VertexData::readTriangles( PlyFile* file, const int nFaces )
                         _quads->push_back(face.vertices[index]);
                     else
                         _triangles->push_back(face.vertices[index]);
-                }
-            }
-
-            if (face.texcoords) {
-                for(int j = 0 ; j < face.nVertices ; j++)
-                {
-                    unsigned int vindex = face.vertices[j];
-                    _texcoord->at(vindex) = osg::Vec2(face.texcoords[j << 1], face.texcoords[(j << 1) + 1]);
                 }
             }
 
